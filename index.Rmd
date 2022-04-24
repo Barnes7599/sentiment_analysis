@@ -13,13 +13,14 @@ output:
 <center> 
 Photo by <a href="https://unsplash.com/@muratodr?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Murat Onder</a> on <a href="https://unsplash.com/s/photos/text?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
 </center>
-  
+<br>
+<br>
 
 <div class="mycontent">
 
 
 <center>
-![](https://github.com/Barnes7599/sentiment_analysis/blob/main/Asset%203.png?raw=true)
+![](https://github.com/Barnes7599/sentiment_analysis/blob/main/Asset%204.png?raw=true){width=35%}
 </center>
 
 
@@ -31,7 +32,7 @@ Sentiment analysis is the study of subjective feelings expressed in text and has
 
 With all the hype around Elon taking a [9.2% stake](https://www.cnbc.com/2022/04/05/elon-musks-9percent-stake-in-twitter-and-board-seat-heres-what-it-means.html) in twitter and his offer to purchase twitter for [$43 billion](https://www.businessinsider.com/elon-musk-buying-twitter-doesnt-care-economics-trusted-public-platform-2022-4), I thought instead of scrapping reviews or opinions of a company's products or services, I decided to analyze Elon Musk's tweets!. 
 
-The data was downloaded from NuttySalmon on [GitHub](https://github.com/NuttySalmon). Though the purpose of their repo was to analyze Elon Musk's Tweets vs Tesla Stock using machine learning algorithms in python, I thought the data would be just as good to conduct a sentiment analysis. Check it out [here](https://github.com/NuttySalmon/Elon-Musk-Tweets-VS-Tesla-Stock)
+The data was downloaded from NuttySalmon on [GitHub](https://github.com/NuttySalmon). Though the purpose of their repo was to analyze Elon Musk's Tweets vs Tesla Stock using machine learning algorithms in python, I thought the data would be just as good to conduct a sentiment analysis. Check it out [here](https://github.com/NuttySalmon/Elon-Musk-Tweets-VS-Tesla-Stock). 
 
 Let's get started...
 
@@ -65,15 +66,15 @@ library(readxl)
 library(showtext)
 library(ggtext)
 library(glue)
-library(patchwork)
 library(tidytext)
 library(textdata)
+library(ggwordcloud)
 ```
 
 
 <h4> **Add design elements** </h4>
 
-I typically will add in design elements upfront so that I know what fonts and colors I will be using in the visualizations. We will use the [showtext](https://github.com/yixuan/showtext) package to read in goggle fonts.
+I typically will add design elements upfront so that I know what fonts and colors I will be using in the visualizations. We will use the [showtext](https://github.com/yixuan/showtext) package to read in goggle fonts and I will simply assign hex color codes to 2 color variables. Do not forget to add the showtext_auto() function to tell the code below to use these specific fonts when called. 
 
 ```{r, echo=TRUE}
 
@@ -95,47 +96,71 @@ showtext_auto()
 <h4> **Load the data** </h4>
 
 
-Data set is located at:[Dataset](https://raw.githubusercontent.com/NuttySalmon/Elon-Musk-Tweets-VS-Tesla-Stock/master/tweets.csv) <br>
+Data set is located at: [Here](https://raw.githubusercontent.com/NuttySalmon/Elon-Musk-Tweets-VS-Tesla-Stock/master/tweets.csv) <br>
 
-I typically use the [janitor](https://github.com/sfirke/janitor) package whenever I read in a data set. it cleans up the column headings by making them all lower case and placing an underscore between spaces.
+I typically use the [janitor](https://github.com/sfirke/janitor) package whenever I read in a data set. it cleans up the column headings by making them all lower case and placing an underscore between spaces. However, this dataset already has nicely structured column headers. Additionally, we will read in stop_words, which is a part of the tidytext package and are common words such as "the", "and", "is" etc. We will want to remove these "stop words" from the elon's tweets. 
 
 ```{r, echo=TRUE}
 
 elon_tweets <- read_csv("https://raw.githubusercontent.com/NuttySalmon/Elon-Musk-Tweets-VS-Tesla-Stock/master/tweets.csv")
 
 data("stop_words")
+
+#Dates
+min_date <- min(elon_tweets$date) %>% 
+  as.Date()
+
+max_date <- max(elon_tweets$date) %>% 
+  as.Date()
+
 ```
+<br>
+One thing to note is that the tweets begin on `r min_date` and the last tweet collected in the dataset was on `r max_date`, 2 months after the COVID pandemic began.
 
 <br>
 
 ---
 
+<h4> **Data Wrangling** </h4>
+
+Now that we have loaded in the data we will have to wrangle the data so that it is tidy, which will enable us to easily use tidytext and other packages. 
+
+To do this we will use the unnest_tokens() function, this will resturcture the data by parasing each word within the tweet and placing them on their own row, essentially converting each word to an observation. Lastly, we will anit_join() "stop words" so that we remove them from the tidy dataset. 
+
 
 ```{r}
 
 elon_tweets_tidy <- elon_tweets %>%
-  select(text) %>%
-  mutate(tweet = row_number()) %>%
+  select(text, date) %>%
+  mutate(tweet = row_number(),
+         date = as.Date(date),
+         date = ymd(date),
+         tweet = row_number()) %>%
   unnest_tokens(word, text) %>%
   anti_join(stop_words, by = "word")
 
-elon_tweets_by_date <- elon_tweets %>%
-  select(text, date) %>%
-  mutate(
-    date = as.Date(date),
-    date = ymd(date),
-    tweet = row_number()
-  ) %>%
-  unnest_tokens(word, text) %>%
-  anti_join(stop_words, by = "word")
+# elon_tweets_by_date <- elon_tweets %>%
+#   select(text, date) %>%
+#   mutate(
+#     date = as.Date(date),
+#     date = ymd(date),
+#     tweet = row_number()
+#   ) %>%
+#   unnest_tokens(word, text) %>%
+#   anti_join(stop_words, by = "word")
+
 ```
+<br>
+
+---
 
 <h4> **Creating Word clouds using ggwordcloud package** </h4>
+
+I have always really liked word clouds. They are visual and informative. They use the preattentive attributes of size, color and intensity to differentiate how common a word or phrase is used. Plus, using the the ggwordcloud package they are very simple to generate. 
 
 ```{r,echo=TRUE,fig.width=10,fig.height=6}
 
 # Load the ggwordcloud package
-library(ggwordcloud)
 
 
 df <- elon_tweets_tidy %>%
@@ -152,55 +177,32 @@ ggplot(df, aes(
   scale_size_area(max_size = 24) +
   scale_color_gradient(low = col1, high = col2)
 ```
+<br>
 
 ---
 
 <h4>**Sentiment Analysis**</h4>
+
+The Bing lexicon uses a binary categorization model that sorts words into a positive or negative category. The AFINN lexicon grades words between -5 (negative scores indicate negative sentiments) and 5 (positive scores indicate positive sentiments). Finally, the NRC lexicon uses emotion dynamics such as anger or joy and also categorizes sentiment like the Bing lexicon dictionary. We will not use any of the emotion dynamics in this analysis. 
+
+Let's create 3 variables on for each lexicon dictionary (Bing, AFINN, NRC) so that we can join the sentiments to our elon_tweet_tidy variable.
+
 <br>
-
-The Bing lexicon uses a binary categorization model that sorts words into a positive or negative category. The AFINN lexicon grades words between -5 (negative scores indicate negative sentiments) and 5 (positive scores indicate positive sentiments).
-
 
 ```{r, echo=TRUE}
 # Assign "bing" lexicon to a variable using the get_sentiments() from the tidytext package
+
 bing <- get_sentiments(lexicon = "bing")
+afinn <- get_sentiments("afinn")
+nrc <- get_sentiments("nrc")
+
 
 df_bing <- elon_tweets_tidy %>%
-  inner_join(bing, by = "word")
-
-# Compute sentiment by tweet
-
-df_bing <- df_bing %>%
-  count(tweet, sentiment, sort = TRUE)
-
-# Manipulate (spread) dataframe from long to wide format
-
-df_bing <- df_bing %>%
+  inner_join(bing, by = "word") %>%
+  count(date,tweet,sentiment,sort = TRUE) %>% 
   spread(key = sentiment, value = n, fill = 0) %>%
-  mutate(sentiment = positive - negative)
-
-df_bing_2 <- df_bing %>%
-  mutate(method = "Bing")
-
-
-# Compute sentiment by date
-
-df_bing_date <- elon_tweets_by_date %>%
-  inner_join(bing, by = "word")
-
-df_bing_date <- df_bing_date %>%
-  count(date, tweet, sentiment, sort = TRUE)
-
-df_bing_date <- df_bing_date %>%
-  spread(key = sentiment, value = n, fill = 0) %>%
-  mutate(sentiment = positive - negative)
-```
-
-
-```{r,echo=TRUE,fig.width=10,fig.height=10}
-
-afinn <- get_sentiments("afinn")
-
+  mutate(sentiment = positive - negative, 
+         method = "Bing")
 
 df_afinn <- elon_tweets_tidy %>%
   inner_join(afinn, by = "word") %>%
@@ -208,8 +210,6 @@ df_afinn <- elon_tweets_tidy %>%
   group_by(tweet) %>%
   summarise(sentiment = sum(sentiment)) %>%
   mutate(method = "AFINN")
-
-nrc <- get_sentiments("nrc")
 
 df_nrc <- elon_tweets_tidy %>%
   inner_join(nrc, by = "word") %>%
@@ -220,7 +220,15 @@ df_nrc <- elon_tweets_tidy %>%
   mutate(sentiment = positive - negative)
 
 
-bind_rows(df_bing_2, df_afinn, df_nrc) %>%
+```
+
+<br>
+We will use the same visualization that is presented in [tidytextminnig](https://www.tidytextmining.com/sentiment.html) because it is one of the best ways to see the differences in all three lexicons 
+
+
+```{r,echo=TRUE,fig.width=10,fig.height=10}
+
+bind_rows(df_bing, df_afinn, df_nrc) %>%
   ggplot(aes(tweet, sentiment)) +
   geom_col() +
   facet_wrap(~method, ncol = 1) +
@@ -244,6 +252,9 @@ bind_rows(df_bing_2, df_afinn, df_nrc) %>%
     ),
     plot.title.position = "plot",
     plot.subtitle = element_text(margin = margin(b = 15)),
+    plot.caption.position = "plot",
+    plot.caption = element_text(hjust = 0,
+                                margin = margin(t=10)),
     strip.background = element_rect(fill = col2),
     strip.text = element_text(
       color = "white",
@@ -251,18 +262,126 @@ bind_rows(df_bing_2, df_afinn, df_nrc) %>%
       family = "patua-one"
     )
   )
+
 ```
+<br>
+Pretty cool! You can see that the absolute sentiment values are different among all three lexicons. In our visualization you can clearly see that AFINN has large absolute values as AFINN has a wider scale contributing to higher values. 
 
 <br>
 
 ---
 
+<h3>**Elon Musk Tweet Sentiment**</h3>
+
+Let's put together a collection of charts using the patchwork package. We will visualize the bing lexicon using a simple column chart counting the number of positive and negative tweets. Additionally, we will create a bar chart using the emotion dynamics within the NRC lexicon. Finally, we will create a histogram using all three lexicon sentiment scores. 
+
+```{r, echo=TRUE,fig.width=10, fig.height=8}
+
+bing_bar <- elon_tweets_tidy %>% 
+  inner_join(bing, by ="word") %>% 
+  count(sentiment) %>% 
+  ggplot(aes(sentiment, n)) +
+  geom_col(fill = col2) +
+  geom_text(aes(label = n), vjust = 1.5, color = "white", size = 4) +
+  theme_classic() +
+  labs(
+    x = "Bing Lexicon",
+    y = NULL,
+    title = NULL
+  ) +
+  theme(
+    text = element_text(
+      family = "montserrat",
+      size = 14
+    ),
+    plot.title = element_text(
+      family = "patua-one",
+      size = 20,
+      margin = margin(b = 20),
+      hjust = .5
+    ),
+    plot.title.position = "plot",
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.line.y = element_blank()
+  )
+
+
+nrc_bar <- elon_tweets_tidy %>% 
+  inner_join(nrc, by ="word") %>% 
+  count(sentiment) %>% 
+  ggplot(aes(reorder(sentiment,n),n)) +
+  geom_col(fill = col2) +
+  geom_text(aes(label = n), vjust = .5, hjust = 1.2, color = "white", size = 3) +
+  coord_flip()+
+  theme_classic() +
+  labs(
+    x = "NRC Lexicon",
+    y = NULL,
+    title = NULL,
+  ) +
+  theme(
+    text = element_text(
+      family = "montserrat",
+      size = 14
+    ),
+    plot.title = element_text(
+      family = "patua-one",
+      size = 20,
+      margin = margin(b = 20),
+      hjust = .5
+    ),
+    plot.title.position = "plot",
+    axis.line.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+
+
+total_sentiment <- bind_rows(df_bing,df_afinn,df_nrc) %>% 
+ group_by(tweet) %>% 
+  summarise(sentiment = sum(sentiment)) %>% 
+  ggplot(aes(sentiment)) +
+  geom_histogram(fill = col2,color = "white", binwidth = 1) +
+     theme_classic() +
+  labs(
+    x = "Tweet Sentiment (Bing | AFINN | NRC Lexicon)",
+    y = NULL,
+    title = ""
+  ) +
+  theme(
+    text = element_text(
+      family = "montserrat",
+      size = 14
+    ),
+    plot.title = element_text(
+      family = "patua-one",
+      size = 20,
+      margin = margin(b = 20),
+      hjust = .5
+    ),
+    plot.title.position = "plot"
+  )
+
+library(patchwork)
+
+(bing_bar|nrc_bar)/total_sentiment
+
+```
+
 <br>
 
-```{r, fig.width=10,fig.height=6}
+
+---
+So far we have been visualizing Elon Musk's tweet sentiment by tweet. So let's take a look at his tweet sentiment over time. 
+
+<br>
+
+```{r, echo=TRUE, fig.width=10,fig.height=6}
 
 ggplot(
-  data = df_bing_date,
+  data = df_bing,
   aes(
     x = date,
     y = sentiment
@@ -289,3 +408,6 @@ ggplot(
     plot.title.position = "plot"
   )
 ```
+<br>
+As you can see the sentiment variability in his tweets has grown over time!
+
