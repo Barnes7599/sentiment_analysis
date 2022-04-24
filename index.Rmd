@@ -409,5 +409,5 @@ ggplot(
   )
 ```
 <br>
-As you can see the sentiment variability in his tweets has grown over time!
+As you can see, sentiment variability in his tweets has grown over time!
 
