@@ -19,7 +19,7 @@ Photo by <a href="https://unsplash.com/@muratodr?utm_source=unsplash&utm_medium=
 
 
 <center>
-![](https://github.com/Barnes7599/sentiment_analysis/blob/main/whitelogo.png?raw=true)
+![](https://github.com/Barnes7599/sentiment_analysis/blob/main/Asset%203.png?raw=true)
 </center>
 
 
