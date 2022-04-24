@@ -18,9 +18,9 @@ Photo by <a href="https://unsplash.com/@muratodr?utm_source=unsplash&utm_medium=
 <div class="mycontent">
 
 
-<!-- <center> -->
-<!-- ![](https://github.com/Barnes7599/sentiment_analysis/blob/main/header3.jpg?raw=true) -->
-<!-- </center> -->
+<center>
+![](https://github.com/Barnes7599/sentiment_analysis/blob/main/whitelogo.png?raw=true)
+</center>
 
 
 ---
