@@ -10,27 +10,34 @@ output:
       before_body: header.html
       after_body: footer.html
 ---
-
+<center> 
+Photo by <a href="https://unsplash.com/@muratodr?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Murat Onder</a> on <a href="https://unsplash.com/s/photos/text?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
+</center>
+  
 
 <div class="mycontent">
 
 
 <!-- <center> -->
-<!-- ![](https://github.com/Barnes7599/DCServiceRequests311/blob/main/311.png?raw=true) -->
+<!-- ![](https://github.com/Barnes7599/sentiment_analysis/blob/main/header3.jpg?raw=true) -->
 <!-- </center> -->
 
-Photo by <a href="https://unsplash.com/@afafa?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Andreas Fickl</a> on <a href="https://unsplash.com/s/photos/text?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
-  
-
-Photo by <a href="https://unsplash.com/@impatrickt?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Patrick Tomasso</a> on <a href="https://unsplash.com/s/photos/text?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
-
-Photo by <a href="https://unsplash.com/@muratodr?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Murat Onder</a> on <a href="https://unsplash.com/s/photos/text?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
-  
-  
 
 ---
 
-Description: 
+<h4> **Description:** </h4>
+
+Sentiment analysis is the study of subjective feelings expressed in text and has recently attracted significant attention from both the research community and industry. As social media, opinions and product reviews continue to influence consumer preferences, more and more companies are seeking ways to determine a consumers attitude towards their products and services. 
+
+With all the hype around Elon taking a [9.2% stake](https://www.cnbc.com/2022/04/05/elon-musks-9percent-stake-in-twitter-and-board-seat-heres-what-it-means.html) in twitter and his offer to purchase twitter for [$43 billion](https://www.businessinsider.com/elon-musk-buying-twitter-doesnt-care-economics-trusted-public-platform-2022-4), I thought instead of scrapping reviews or opinions of a company's products or services, I decided to analyze Elon Musk's tweets!. 
+
+The data was downloaded from NuttySalmon on [GitHub](https://github.com/NuttySalmon). Though the purpose of their repo was to analyze Elon Musk's Tweets vs Tesla Stock using machine learning algorithms in python, I thought the data would be just as good to conduct a sentiment analysis. Check it out [here](https://github.com/NuttySalmon/Elon-Musk-Tweets-VS-Tesla-Stock)
+
+Let's get started...
+
+<br>
+
+---
 
 
 ```{r setup, include=FALSE}
@@ -46,7 +53,7 @@ unlink("index.cache", recursive = TRUE)
 ```
 
 
-<h3> **Load Libraries** </h3>
+<h4> **Load Libraries** </h4>
 
 Load packages - you may need to install packages using the install.packages() function. Make sure you put the package name in quotes like install.packages("tidyverse"), you will only have to do this once. 
 
@@ -59,21 +66,20 @@ library(showtext)
 library(ggtext)
 library(glue)
 library(patchwork)
-library(highcharter)
-library(rtweet)
 library(tidytext)
+library(textdata)
 ```
 
 
-<h3> **Add design elements** </h3>
+<h4> **Add design elements** </h4>
 
 I typically will add in design elements upfront so that I know what fonts and colors I will be using in the visualizations. We will use the [showtext](https://github.com/yixuan/showtext) package to read in goggle fonts.
 
 ```{r, echo=TRUE}
 
 # Assign color variables
-col1 <- "#E1DABF"
-col2 <- "#3C6075"
+col1 <- "#F1F4CC"
+col2 <- "#00293D"
 
 # Adding Google Fonts
 font_add_google(family = "patua-one", "Patua One")
@@ -86,10 +92,10 @@ showtext_auto()
 ---
 
 
-<h3> **Load the data** </h3>
+<h4> **Load the data** </h4>
 
 
-Data set is located at:[Dataset](https://opendata.dc.gov/datasets/311-city-service-requests-in-2022/explore?location=39.982830%2C-78.566945%2C8.99&showTable=true) <br>
+Data set is located at:[Dataset](https://raw.githubusercontent.com/NuttySalmon/Elon-Musk-Tweets-VS-Tesla-Stock/master/tweets.csv) <br>
 
 I typically use the [janitor](https://github.com/sfirke/janitor) package whenever I read in a data set. it cleans up the column headings by making them all lower case and placing an underscore between spaces.
 
@@ -99,6 +105,8 @@ elon_tweets <- read_csv("https://raw.githubusercontent.com/NuttySalmon/Elon-Musk
 
 data("stop_words")
 ```
+
+<br>
 
 ---
 
@@ -120,10 +128,9 @@ elon_tweets_by_date <- elon_tweets %>%
   ) %>%
   unnest_tokens(word, text) %>%
   anti_join(stop_words, by = "word")
-
 ```
 
-<h3> **Creating Word clouds using ggwordcloud package** </h3>
+<h4> **Creating Word clouds using ggwordcloud package** </h4>
 
 ```{r,echo=TRUE,fig.width=10,fig.height=6}
 
@@ -144,17 +151,17 @@ ggplot(df, aes(
   theme_minimal() +
   scale_size_area(max_size = 24) +
   scale_color_gradient(low = col1, high = col2)
-
 ```
 
 ---
 
-<h3>**Sentiment Analysis**</h3>
+<h4>**Sentiment Analysis**</h4>
 <br>
 
-The Bing lexicon uses a binary categorization model that sorts words into positive or negative positions. The AFINN lexicon grades words between -5 and 5 (positive scores indicate positive sentiments).
+The Bing lexicon uses a binary categorization model that sorts words into a positive or negative category. The AFINN lexicon grades words between -5 (negative scores indicate negative sentiments) and 5 (positive scores indicate positive sentiments).
 
-```{r}
+
+```{r, echo=TRUE}
 # Assign "bing" lexicon to a variable using the get_sentiments() from the tidytext package
 bing <- get_sentiments(lexicon = "bing")
 
@@ -173,10 +180,9 @@ df_bing <- df_bing %>%
   mutate(sentiment = positive - negative)
 
 df_bing_2 <- df_bing %>%
-  mutate(method = "BING")
-  
+  mutate(method = "Bing")
 
-  
+
 # Compute sentiment by date
 
 df_bing_date <- elon_tweets_by_date %>%
@@ -188,28 +194,35 @@ df_bing_date <- df_bing_date %>%
 df_bing_date <- df_bing_date %>%
   spread(key = sentiment, value = n, fill = 0) %>%
   mutate(sentiment = positive - negative)
-
-
 ```
 
 
-```{r,fig.width=10,fig.height=10}
-library(textdata)
+```{r,echo=TRUE,fig.width=10,fig.height=10}
 
 afinn <- get_sentiments("afinn")
 
 
 df_afinn <- elon_tweets_tidy %>%
-  inner_join(afinn, by = "word") %>% 
-  rename(sentiment = value) %>% 
-  group_by(tweet) %>% 
-  summarise(sentiment = sum(sentiment)) %>% 
-  mutate(method="AFINN")
+  inner_join(afinn, by = "word") %>%
+  rename(sentiment = value) %>%
+  group_by(tweet) %>%
+  summarise(sentiment = sum(sentiment)) %>%
+  mutate(method = "AFINN")
+
+nrc <- get_sentiments("nrc")
+
+df_nrc <- elon_tweets_tidy %>%
+  inner_join(nrc, by = "word") %>%
+  filter(sentiment %in% c("positive", "negative")) %>%
+  mutate(method = "NRC") %>%
+  count(tweet, sentiment, method) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>%
+  mutate(sentiment = positive - negative)
 
 
-bind_rows(df_bing_2, df_afinn) %>% 
-  ggplot(aes(tweet, sentiment)) + 
-  geom_col() + 
+bind_rows(df_bing_2, df_afinn, df_nrc) %>%
+  ggplot(aes(tweet, sentiment)) +
+  geom_col() +
   facet_wrap(~method, ncol = 1) +
   geom_hline(yintercept = 0) +
   theme_classic() +
@@ -217,7 +230,8 @@ bind_rows(df_bing_2, df_afinn) %>%
     y = "Tweet Sentiment",
     x = "Tweet Number",
     title = "Elon Musk tweet sentiment by tweet",
-    subtitle = "Comparing Bing and AFINN lexicons"
+    subtitle = "Comparing AFINN, Bing and NRC lexicons",
+    caption = "Reference: https://www.tidytextmining.com/sentiment.html"
   ) +
   theme(
     text = element_text(
@@ -226,16 +240,17 @@ bind_rows(df_bing_2, df_afinn) %>%
     ),
     plot.title = element_text(
       family = "patua-one",
-      size = 20),
+      size = 20
+    ),
     plot.title.position = "plot",
-    plot.subtitle = element_text(margin = margin(b=15)),
+    plot.subtitle = element_text(margin = margin(b = 15)),
     strip.background = element_rect(fill = col2),
-    strip.text = element_text(color = "white",
-                              face = "bold",
-                              family = "patua-one")
+    strip.text = element_text(
+      color = "white",
+      face = "bold",
+      family = "patua-one"
+    )
   )
-
-
 ```
 
 <br>
@@ -273,7 +288,4 @@ ggplot(
     ),
     plot.title.position = "plot"
   )
-
-
 ```
-
