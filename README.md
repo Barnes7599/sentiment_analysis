@@ -1,6 +1,6 @@
-Click [here](https://barnes7599.github.io/sentiment_analysis/) to see the project in Rmarkdown
-
 ![](https://github.com/Barnes7599/sentiment_analysis/blob/main/wordcloud.PNG?raw=true)
+
+Click [here](https://barnes7599.github.io/sentiment_analysis/) to see the project in Rmarkdown
 
 **Description:**
 
