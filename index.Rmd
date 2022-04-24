@@ -1,0 +1,279 @@
+---
+title: "<center><div class='mytitle'>Lexicon-based Sentiment Analysis</div></center>"
+author: "<center><div class='mysubtitle'>See the code on [github](https://github.com/Barnes7599/sentiment_analysis).</div></center>"
+output:
+  html_document:
+    css: style.css
+    theme: "yeti"
+    code_folding: hide
+    includes:
+      before_body: header.html
+      after_body: footer.html
+---
+
+
+<div class="mycontent">
+
+
+<!-- <center> -->
+<!-- ![](https://github.com/Barnes7599/DCServiceRequests311/blob/main/311.png?raw=true) -->
+<!-- </center> -->
+
+Photo by <a href="https://unsplash.com/@afafa?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Andreas Fickl</a> on <a href="https://unsplash.com/s/photos/text?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
+  
+
+Photo by <a href="https://unsplash.com/@impatrickt?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Patrick Tomasso</a> on <a href="https://unsplash.com/s/photos/text?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
+
+Photo by <a href="https://unsplash.com/@muratodr?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Murat Onder</a> on <a href="https://unsplash.com/s/photos/text?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
+  
+  
+
+---
+
+Description: 
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  cache = TRUE,
+  fig.align = "center"
+)
+options(scipen = 999) # keep scientific notation turned off
+unlink("index.cache", recursive = TRUE)
+```
+
+
+<h3> **Load Libraries** </h3>
+
+Load packages - you may need to install packages using the install.packages() function. Make sure you put the package name in quotes like install.packages("tidyverse"), you will only have to do this once. 
+
+```{r, echo = TRUE}
+
+library(tidyverse)
+library(lubridate)
+library(readxl)
+library(showtext)
+library(ggtext)
+library(glue)
+library(patchwork)
+library(highcharter)
+library(rtweet)
+library(tidytext)
+```
+
+
+<h3> **Add design elements** </h3>
+
+I typically will add in design elements upfront so that I know what fonts and colors I will be using in the visualizations. We will use the [showtext](https://github.com/yixuan/showtext) package to read in goggle fonts.
+
+```{r, echo=TRUE}
+
+# Assign color variables
+col1 <- "#E1DABF"
+col2 <- "#3C6075"
+
+# Adding Google Fonts
+font_add_google(family = "patua-one", "Patua One")
+font_add_google(family = "montserrat", "Montserrat")
+
+# function used to tell the code below use the above fonts
+showtext_auto()
+```
+
+---
+
+
+<h3> **Load the data** </h3>
+
+
+Data set is located at:[Dataset](https://opendata.dc.gov/datasets/311-city-service-requests-in-2022/explore?location=39.982830%2C-78.566945%2C8.99&showTable=true) <br>
+
+I typically use the [janitor](https://github.com/sfirke/janitor) package whenever I read in a data set. it cleans up the column headings by making them all lower case and placing an underscore between spaces.
+
+```{r, echo=TRUE}
+
+elon_tweets <- read_csv("https://raw.githubusercontent.com/NuttySalmon/Elon-Musk-Tweets-VS-Tesla-Stock/master/tweets.csv")
+
+data("stop_words")
+```
+
+---
+
+
+```{r}
+
+elon_tweets_tidy <- elon_tweets %>%
+  select(text) %>%
+  mutate(tweet = row_number()) %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words, by = "word")
+
+elon_tweets_by_date <- elon_tweets %>%
+  select(text, date) %>%
+  mutate(
+    date = as.Date(date),
+    date = ymd(date),
+    tweet = row_number()
+  ) %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words, by = "word")
+
+```
+
+<h3> **Creating Word clouds using ggwordcloud package** </h3>
+
+```{r,echo=TRUE,fig.width=10,fig.height=6}
+
+# Load the ggwordcloud package
+library(ggwordcloud)
+
+
+df <- elon_tweets_tidy %>%
+  count(word, sort = TRUE) %>%
+  drop_na() %>%
+  filter(n > 50)
+
+ggplot(df, aes(
+  label = word, size = n,
+  color = n
+)) +
+  geom_text_wordcloud_area(rm_outside = FALSE, max_steps = 1) +
+  theme_minimal() +
+  scale_size_area(max_size = 24) +
+  scale_color_gradient(low = col1, high = col2)
+
+```
+
+---
+
+<h3>**Sentiment Analysis**</h3>
+<br>
+
+The Bing lexicon uses a binary categorization model that sorts words into positive or negative positions. The AFINN lexicon grades words between -5 and 5 (positive scores indicate positive sentiments).
+
+```{r}
+# Assign "bing" lexicon to a variable using the get_sentiments() from the tidytext package
+bing <- get_sentiments(lexicon = "bing")
+
+df_bing <- elon_tweets_tidy %>%
+  inner_join(bing, by = "word")
+
+# Compute sentiment by tweet
+
+df_bing <- df_bing %>%
+  count(tweet, sentiment, sort = TRUE)
+
+# Manipulate (spread) dataframe from long to wide format
+
+df_bing <- df_bing %>%
+  spread(key = sentiment, value = n, fill = 0) %>%
+  mutate(sentiment = positive - negative)
+
+df_bing_2 <- df_bing %>%
+  mutate(method = "BING")
+  
+
+  
+# Compute sentiment by date
+
+df_bing_date <- elon_tweets_by_date %>%
+  inner_join(bing, by = "word")
+
+df_bing_date <- df_bing_date %>%
+  count(date, tweet, sentiment, sort = TRUE)
+
+df_bing_date <- df_bing_date %>%
+  spread(key = sentiment, value = n, fill = 0) %>%
+  mutate(sentiment = positive - negative)
+
+
+```
+
+
+```{r,fig.width=10,fig.height=10}
+library(textdata)
+
+afinn <- get_sentiments("afinn")
+
+
+df_afinn <- elon_tweets_tidy %>%
+  inner_join(afinn, by = "word") %>% 
+  rename(sentiment = value) %>% 
+  group_by(tweet) %>% 
+  summarise(sentiment = sum(sentiment)) %>% 
+  mutate(method="AFINN")
+
+
+bind_rows(df_bing_2, df_afinn) %>% 
+  ggplot(aes(tweet, sentiment)) + 
+  geom_col() + 
+  facet_wrap(~method, ncol = 1) +
+  geom_hline(yintercept = 0) +
+  theme_classic() +
+  labs(
+    y = "Tweet Sentiment",
+    x = "Tweet Number",
+    title = "Elon Musk tweet sentiment by tweet",
+    subtitle = "Comparing Bing and AFINN lexicons"
+  ) +
+  theme(
+    text = element_text(
+      family = "montserrat",
+      size = 14
+    ),
+    plot.title = element_text(
+      family = "patua-one",
+      size = 20),
+    plot.title.position = "plot",
+    plot.subtitle = element_text(margin = margin(b=15)),
+    strip.background = element_rect(fill = col2),
+    strip.text = element_text(color = "white",
+                              face = "bold",
+                              family = "patua-one")
+  )
+
+
+```
+
+<br>
+
+---
+
+<br>
+
+```{r, fig.width=10,fig.height=6}
+
+ggplot(
+  data = df_bing_date,
+  aes(
+    x = date,
+    y = sentiment
+  ),
+) +
+  geom_col() +
+  geom_hline(yintercept = 0) +
+  theme_classic() +
+  labs(
+    y = "Tweet Sentiment",
+    x = NULL,
+    title = "Elon Musk tweet sentiment over time"
+  ) +
+  theme(
+    text = element_text(
+      family = "montserrat",
+      size = 14
+    ),
+    plot.title = element_text(
+      family = "patua-one",
+      size = 20,
+      margin = margin(b = 20)
+    ),
+    plot.title.position = "plot"
+  )
+
+
+```
+
