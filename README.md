@@ -1,6 +1,6 @@
 ![](https://github.com/Barnes7599/sentiment_analysis/blob/main/wordcloud.PNG?raw=true)
 
-<h4> **Description:** </h4>
+**Description:**
 
 Sentiment analysis is the study of subjective feelings expressed in text and has recently attracted significant attention from both the research community and industry. As social media, opinions and product reviews continue to influence consumer preferences, more and more companies are seeking ways to determine a consumers attitude towards their products and services. 
 
