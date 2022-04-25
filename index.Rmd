@@ -364,6 +364,7 @@ library(patchwork)
 
 
 ---
+
 So far we have been visualizing Elon Musk's tweet sentiment by tweet. So let's take a look at his tweet sentiment over time. 
 
 <br>
@@ -397,7 +398,38 @@ ggplot(
     ),
     plot.title.position = "plot"
   )
+
 ```
 <br>
 As you can see, sentiment variability in his tweets has grown over time!
+
+
+
+<h3>**Let's visualizes what words appear together most often in Elon's tweets? **</h3>
+
+
+```{r, echo=TRUE, fig.width=10,fig.height=8}
+library(tidygraph) 
+library(ggraph) 
+library(widyr)
+
+set.seed(1954)
+
+elon_tweets_tidy %>% 
+  distinct(date, word) %>% 
+  add_count(word, name = "word_total") %>% 
+  filter(word_total >= 30) %>% 
+  pairwise_cor(word, date, sort = TRUE) %>% 
+  filter(correlation > .2) %>% 
+  igraph::graph_from_data_frame() %>% 
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(alpha = correlation),
+                 show.legend = FALSE) + 
+  geom_node_point() +
+  geom_node_text(aes(label=name),
+               repel = TRUE) +
+  theme_void()
+
+
+```
 

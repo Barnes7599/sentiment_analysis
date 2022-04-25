@@ -20,3 +20,6 @@ rtweet
 tidytext
 ggwordcloud
 textdata
+tidygraph
+ggraph
+widyr
